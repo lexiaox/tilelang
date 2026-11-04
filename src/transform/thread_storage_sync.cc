@@ -975,7 +975,10 @@ struct TileLangThreadSyncPlanner : public ConstrVisitor {
     }
     const Var &x_var = x_thread->var;
     const auto *x_extent = as_const_int(x_thread->dom->extent);
-    if (x_extent == nullptr || *x_extent <= 0) {
+    // The rewrite splits x into whole warps, so its extent must be a positive
+    // multiple of the warp size: with a single thread there is no warp index to
+    // share, and a partial warp would make the lane decomposition inexact.
+    if (x_extent == nullptr || *x_extent <= 0 || *x_extent % *divisor != 0) {
       return false;
     }
 
